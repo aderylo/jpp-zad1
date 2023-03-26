@@ -18,17 +18,13 @@ instance Polynomial DensePoly where
   degree (P coeffs) = length coeffs - 1
 
 instance (Eq a, Num a) => Num (DensePoly a) where
-  (+) :: (Eq a, Num a) => DensePoly a -> DensePoly a -> DensePoly a
+  (+), (*) :: (Eq a, Num a) => DensePoly a -> DensePoly a -> DensePoly a
   (P coeffs1) + (P coeffs2) = normalize $ P $ addCoeffs coeffs1 coeffs2
     where
       addCoeffs [] ys = ys
       addCoeffs xs [] = xs
       addCoeffs (x : xs) (y : ys) = (x + y) : addCoeffs xs ys
 
-  negate :: (Eq a, Num a) => DensePoly a -> DensePoly a
-  negate (P coeffs) = P $ map negate coeffs
-
-  (*) :: (Eq a, Num a) => DensePoly a -> DensePoly a -> DensePoly a
   (P coeffs1) * (P coeffs2) = normalize $ P $ multCoeffs coeffs1 coeffs2
     where
       multCoeffs [] _ = []
@@ -39,11 +35,20 @@ instance (Eq a, Num a) => Num (DensePoly a) where
       addCoeffs xs [] = xs
       addCoeffs (x : xs) (y : ys) = (x + y) : addCoeffs xs ys
 
+  negate :: (Eq a, Num a) => DensePoly a -> DensePoly a
+  negate (P coeffs) = P $ map negate coeffs
+
+  fromInteger :: (Eq a, Num a) => Integer -> DensePoly a
   fromInteger 0 = P []
   fromInteger n = P [fromInteger n]
 
+  abs :: (Eq a, Num a) => DensePoly a -> DensePoly a
   abs (P coeffs) = P $ map abs coeffs
 
+  signum :: (Eq a, Num a) => DensePoly a -> DensePoly a
+  signum = undefined
+
+normalize :: (Eq a, Num a) => DensePoly a -> DensePoly a
 normalize (P []) = P []
 normalize (P coeffs) = P $ reverse $ dropWhile (== 0) $ reverse coeffs
 
