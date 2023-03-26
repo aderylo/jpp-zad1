@@ -8,9 +8,12 @@ import Data.List(sortBy, sortOn)
 import Data.Function(on)
 import qualified Data.Ord
 
+-- | fromDP example
+-- >>> fromDP sampleDP
+-- S {unS = [(3,1),(0,-1)]}
 fromDP :: (Eq a, Num a) => DensePoly a -> SparsePoly a
 fromDP (P []) = S []
-fromDP (P coeffs) = S $ filter ((/= 0) . snd) $ zip [0..] coeffs
+fromDP (P coeffs) = S $ normalize $ filter ((/= 0) . snd) $ zip [0..] coeffs
 
 toDP :: (Eq a, Num a) => SparsePoly a -> DensePoly a
 toDP (S []) = P []
