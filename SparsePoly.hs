@@ -59,6 +59,12 @@ instance (Eq a, Num a) => Num (SparsePoly a) where
   fromInteger :: (Eq a, Num a) => Integer -> SparsePoly a
   fromInteger x = constP $ fromInteger x
 
+  abs :: (Eq a, Num a) => SparsePoly a -> SparsePoly a
+  abs (S coeffs) = S $ map (first abs) coeffs
+
+  signum :: (Eq a, Num a) => SparsePoly a -> SparsePoly a
+  signum = undefined
+
 sortPairsByFirstDesc :: Ord a => [(a, b)] -> [(a, b)]
 sortPairsByFirstDesc = sortBy (\(a, _) (b, _) -> compare b a)
 
