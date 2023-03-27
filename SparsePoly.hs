@@ -51,9 +51,8 @@ instance Polynomial SparsePoly where
   degree (S xs) = fst $ last xs
 
 instance (Eq a, Num a) => Num (SparsePoly a) where
-  (+), (-), (*) :: (Eq a, Num a) => SparsePoly a -> SparsePoly a -> SparsePoly a
+  (+), (*) :: (Eq a, Num a) => SparsePoly a -> SparsePoly a -> SparsePoly a
   (+) (S xs) (S ys) = S $ sortPairsByFirstDesc $ cleanUp $ combine (+) xs ys
-  (-) (S xs) (S ys) = S $ sortPairsByFirstDesc $ cleanUp $ combine (-) xs ys
   (*) (S xs) (S ys) = S [(i+j, c*d) | (i, c) <- xs, (j, d) <- ys]
 
   negate :: (Eq a, Num a) => SparsePoly a -> SparsePoly a
