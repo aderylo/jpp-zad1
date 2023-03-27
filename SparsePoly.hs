@@ -86,7 +86,7 @@ simplify :: (Eq a, Num b) => [(a, b)] -> [(a, b)]
 simplify [] = []
 simplify [(a,b)] = [(a,b)]
 simplify ((a,b):(c,d):xs) 
-  | a == c = (a, b + d): simplify xs
+  | a == c = simplify $ (a, b + d):xs
   | otherwise = (a,b): simplify ((c,d):xs)
 
 
