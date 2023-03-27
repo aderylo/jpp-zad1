@@ -11,18 +11,19 @@ instance Functor DensePoly where
 instance Polynomial DensePoly where
   zeroP :: DensePoly a
   zeroP = P []
-  
+
   constP :: (Eq a, Num a) => a -> DensePoly a
-  constP x = P [x]
-  
+  constP 0 = P []
+  constP x = normalize $ P [x]
+
   varP :: Num a => DensePoly a
   varP = P [0, 1]
-  
+
   evalP :: Num a => DensePoly a -> a -> a
   evalP (P coeffs) x = sum $ zipWith (\c i -> c * x ^ i) coeffs [0 ..]
-  
+
   shiftP :: (Eq a, Num a) => Int -> DensePoly a -> DensePoly a
-  shiftP n (P coeffs) = P $ replicate n 0 ++ coeffs
+  shiftP n (P coeffs) = normalize $ P $ replicate n 0 ++ coeffs
 
   degree :: (Eq a, Num a) => DensePoly a -> Int
   degree (P []) = -1
@@ -47,7 +48,7 @@ instance (Eq a, Num a) => Num (DensePoly a) where
       addCoeffs (x : xs) (y : ys) = (x + y) : addCoeffs xs ys
 
   negate :: (Eq a, Num a) => DensePoly a -> DensePoly a
-  negate (P coeffs) = P $ map negate coeffs
+  negate (P coeffs) = normalize $ P $ map negate coeffs
 
   fromInteger :: (Eq a, Num a) => Integer -> DensePoly a
   fromInteger 0 = P []
@@ -71,7 +72,11 @@ normalize (P coeffs) = P $ reverse $ dropWhile (== 0) $ reverse coeffs
 -- >>> isCanonicalDP (sampleDP - sampleDP)
 -- True
 instance (Eq a, Num a) => Eq (DensePoly a) where
-  (P xs) == (P ys) = xs == ys
+  (==) :: (Eq a, Num a) => DensePoly a -> DensePoly a -> Bool
+  (==) (P xd) (P yd) = 
+    let P xs = normalize (P xd) 
+        P ys = normalize (P yd) 
+    in xs == ys
 
 -- |
 -- >>>  P [1,2] == P [1,2]
