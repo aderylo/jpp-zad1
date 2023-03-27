@@ -60,7 +60,7 @@ instance Polynomial SparsePoly where
 
 instance (Eq a, Num a) => Num (SparsePoly a) where
   (+), (*) :: (Eq a, Num a) => SparsePoly a -> SparsePoly a -> SparsePoly a
-  (+) (S xs) (S ys) = S $ sortPairsByFirstDesc $ cleanUp $ combine (+) xs ys
+  (+) (S xs) (S ys) = S $ normalize $ combine (+) xs ys
   (*) (S xs) (S ys) = S $ normalize [(i + j, c * d) | (i, c) <- xs, (j, d) <- ys]
 
   negate :: (Eq a, Num a) => SparsePoly a -> SparsePoly a
@@ -75,12 +75,6 @@ instance (Eq a, Num a) => Num (SparsePoly a) where
   signum :: (Eq a, Num a) => SparsePoly a -> SparsePoly a
   signum = undefined
 
-sortPairsByFirstDesc :: Ord a => [(a, b)] -> [(a, b)]
-sortPairsByFirstDesc = sortBy (\(a, _) (b, _) -> compare b a)
-
-cleanUp :: (Eq b, Num b) => [(a, b)] -> [(a, b)]
-cleanUp = filter (\(_, y) -> y /= 0)
-
 combine :: Eq a => (b -> b -> b) -> [(a, b)] -> [(a, b)] -> [(a, b)]
 combine f xs ys =
   let common = [(x, f a b) | (x, a) <- xs, (y, b) <- ys, x == y]
@@ -89,13 +83,13 @@ combine f xs ys =
 
 normalize :: (Eq a, Num a) => [(Int, a)] -> [(Int, a)]
 normalize xs = filter (\(_, c) -> c /= 0) $ simplify $ sortOn (Data.Ord.Down . fst) xs
-
-simplify :: (Eq a, Num b) => [(a, b)] -> [(a, b)]
-simplify [] = []
-simplify [(a, b)] = [(a, b)]
-simplify ((a, b) : (c, d) : xs)
-  | a == c = simplify $ (a, b + d) : xs
-  | otherwise = (a, b) : simplify ((c, d) : xs)
+  where
+    simplify :: (Eq a, Num b) => [(a, b)] -> [(a, b)]
+    simplify [] = []
+    simplify [(a, b)] = [(a, b)]
+    simplify ((a, b) : (c, d) : xs)
+      | a == c = simplify $ (a, b + d) : xs
+      | otherwise = (a, b) : simplify ((c, d) : xs)
 
 instance (Eq a, Num a) => Eq (SparsePoly a) where
   (==) :: (Eq a, Num a) => SparsePoly a -> SparsePoly a -> Bool
