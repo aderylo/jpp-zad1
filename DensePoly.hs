@@ -9,11 +9,22 @@ instance Functor DensePoly where
   fmap f (P coeffs) = P $ map f coeffs
 
 instance Polynomial DensePoly where
+  zeroP :: DensePoly a
   zeroP = P []
+  
+  constP :: (Eq a, Num a) => a -> DensePoly a
   constP x = P [x]
+  
+  varP :: Num a => DensePoly a
   varP = P [0, 1]
+  
+  evalP :: Num a => DensePoly a -> a -> a
   evalP (P coeffs) x = sum $ zipWith (\c i -> c * x ^ i) coeffs [0 ..]
+  
+  shiftP :: (Eq a, Num a) => Int -> DensePoly a -> DensePoly a
   shiftP n (P coeffs) = P $ replicate n 0 ++ coeffs
+
+  degree :: (Eq a, Num a) => DensePoly a -> Int
   degree (P []) = -1
   degree (P coeffs) = length coeffs - 1
 
