@@ -51,11 +51,12 @@ instance Polynomial SparsePoly where
   evalP (S xs) y = sum [c * y ^ i | (i, c) <- xs]
 
   shiftP :: (Eq a, Num a) => Int -> SparsePoly a -> SparsePoly a
-  shiftP n (S xs) = S [(i + n, c) | (i, c) <- xs]
+  shiftP n (S xs) = S $ normalize [(i + n, c) | (i, c) <- xs]
 
   degree :: (Eq a, Num a) => SparsePoly a -> Int
-  degree (S []) = -1
-  degree (S xs) = fst $ last xs
+  degree (S xs) =
+    let xs' = normalize xs
+     in if null xs' then -1 else fst $ head xs'
 
 instance (Eq a, Num a) => Num (SparsePoly a) where
   (+), (*) :: (Eq a, Num a) => SparsePoly a -> SparsePoly a -> SparsePoly a
@@ -102,7 +103,35 @@ instance (Eq a, Num a) => Eq (SparsePoly a) where
 
 -- qrP s t | not(nullP t) = (q, r) iff s == q*t + r && degree r < degree t
 qrP :: (Eq a, Fractional a) => SparsePoly a -> SparsePoly a -> (SparsePoly a, SparsePoly a)
-qrP = undefined
+-- qrP (S []) t | not (nullP t) = (S [], S [])
+-- qrP s t | not (nullP t) = go zeroP s
+--   where
+--     go q r | degree r < degree t = (q, r)
+--            | otherwise =
+--                let m = snd (leadingTerm r) / snd (leadingTerm t)
+--                    d = shiftP (degree r - degree t) (constP m)
+--                    q' =  q + d
+--                    r' = r - (d * t)
+--                in go q' (dropZeroes r')
+--     dropZeroes (S xs) = S (dropWhile ((==0) . snd) xs)
+-- qrP _ _ = undefined
+qrP _ (S []) = undefined
+qrP (S []) t | not (nullP t) = (S [], S [])
+qrP s t | not (nullP t) = go zeroP s t
+  where
+    go q r t
+      | degree r < degree t = (q, r)
+      | otherwise =
+        let m = snd (leadingTerm r) / snd (leadingTerm t)
+            d = shiftP (degree r - degree t) (constP m)
+            q' = q + d
+            r' = r - d * t
+         in go q' r' t
+qrP _ _ = undefined
+
+leadingTerm :: (Eq a, Num a) => SparsePoly a -> (Int, a)
+leadingTerm (S []) = (0, 0)
+leadingTerm (S xs) = last xs
 
 -- | Division example
 -- >>> qrP (x^2 - 1) (x -1) == ((x + 1), 0)
