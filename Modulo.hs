@@ -1,0 +1,1 @@
+testy-zad1/Modulo.hs
