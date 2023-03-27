@@ -103,35 +103,23 @@ instance (Eq a, Num a) => Eq (SparsePoly a) where
 
 -- qrP s t | not(nullP t) = (q, r) iff s == q*t + r && degree r < degree t
 qrP :: (Eq a, Fractional a) => SparsePoly a -> SparsePoly a -> (SparsePoly a, SparsePoly a)
--- qrP (S []) t | not (nullP t) = (S [], S [])
--- qrP s t | not (nullP t) = go zeroP s
---   where
---     go q r | degree r < degree t = (q, r)
---            | otherwise =
---                let m = snd (leadingTerm r) / snd (leadingTerm t)
---                    d = shiftP (degree r - degree t) (constP m)
---                    q' =  q + d
---                    r' = r - (d * t)
---                in go q' (dropZeroes r')
---     dropZeroes (S xs) = S (dropWhile ((==0) . snd) xs)
--- qrP _ _ = undefined
 qrP _ (S []) = undefined
 qrP (S []) t | not (nullP t) = (S [], S [])
-qrP s t | not (nullP t) = go zeroP s t
+qrP s t | not (nullP t) = go zeroP s
   where
-    go q r t
+    go q r
       | degree r < degree t = (q, r)
       | otherwise =
         let m = snd (leadingTerm r) / snd (leadingTerm t)
             d = shiftP (degree r - degree t) (constP m)
             q' = q + d
             r' = r - d * t
-         in go q' r' t
+         in go q' r'
 qrP _ _ = undefined
 
 leadingTerm :: (Eq a, Num a) => SparsePoly a -> (Int, a)
 leadingTerm (S []) = (0, 0)
-leadingTerm (S xs) = last xs
+leadingTerm (S xs) = head xs
 
 -- | Division example
 -- >>> qrP (x^2 - 1) (x -1) == ((x + 1), 0)
