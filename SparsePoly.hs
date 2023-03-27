@@ -53,7 +53,7 @@ instance Polynomial SparsePoly where
 instance (Eq a, Num a) => Num (SparsePoly a) where
   (+), (*) :: (Eq a, Num a) => SparsePoly a -> SparsePoly a -> SparsePoly a
   (+) (S xs) (S ys) = S $ sortPairsByFirstDesc $ cleanUp $ combine (+) xs ys
-  (*) (S xs) (S ys) = S [(i+j, c*d) | (i, c) <- xs, (j, d) <- ys]
+  (*) (S xs) (S ys) = S $ normalize [(i+j, c*d) | (i, c) <- xs, (j, d) <- ys]
 
   negate :: (Eq a, Num a) => SparsePoly a -> SparsePoly a
   negate (S xs) = S $ map (second negate) xs
@@ -80,7 +80,14 @@ combine f xs ys =
         in  unique ++ common
 
 normalize :: (Eq a, Num a) => [(Int, a)] -> [(Int, a)]
-normalize xs = filter (\(_, c) -> c /= 0) $ sortOn (Data.Ord.Down . fst) xs
+normalize xs = filter (\(_, c) -> c /= 0) $ simplify $ sortOn (Data.Ord.Down . fst) xs
+
+simplify :: (Eq a, Num b) => [(a, b)] -> [(a, b)]
+simplify [] = []
+simplify [(a,b)] = [(a,b)]
+simplify ((a,b):(c,d):xs) 
+  | a == c = (a, b + d): simplify xs
+  | otherwise = (a,b): simplify ((c,d):xs)
 
 
 instance (Eq a, Num a) => Eq (SparsePoly a) where
