@@ -26,8 +26,8 @@ instance Polynomial DensePoly where
   shiftP n (P coeffs) = normalize $ P $ replicate n 0 ++ coeffs
 
   degree :: (Eq a, Num a) => DensePoly a -> Int
-  degree (P []) = -1
-  degree (P coeffs) = length coeffs - 1
+  degree (P xs) = let P xs' = normalize (P xs)
+      in if null xs' then - 1 else length xs' - 1
 
 instance (Eq a, Num a) => Num (DensePoly a) where
   (+), (*) :: (Eq a, Num a) => DensePoly a -> DensePoly a -> DensePoly a
@@ -73,9 +73,9 @@ normalize (P coeffs) = P $ reverse $ dropWhile (== 0) $ reverse coeffs
 -- True
 instance (Eq a, Num a) => Eq (DensePoly a) where
   (==) :: (Eq a, Num a) => DensePoly a -> DensePoly a -> Bool
-  (==) (P xd) (P yd) = 
-    let P xs = normalize (P xd) 
-        P ys = normalize (P yd) 
+  (==) (P xd) (P yd) =
+    let P xs = normalize (P xd)
+        P ys = normalize (P yd)
     in xs == ys
 
 -- |
