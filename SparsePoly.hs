@@ -1,23 +1,30 @@
 {-# LANGUAGE InstanceSigs #-}
-module SparsePoly(fromDP, toDP, qrP) where
 
+module SparsePoly (fromDP, toDP, qrP) where
+
+import Data.Function (on)
+import Data.List (sortBy, sortOn)
+import qualified Data.Ord
+import DensePoly
 import PolyClass
 import Representation
-
-import Data.List(sortBy, sortOn)
-import Data.Function(on)
-import qualified Data.Ord
 
 -- | fromDP example
 -- >>> fromDP sampleDP
 -- S {unS = [(3,1),(0,-1)]}
 fromDP :: (Eq a, Num a) => DensePoly a -> SparsePoly a
 fromDP (P []) = S []
-fromDP (P coeffs) = S $ normalize $ filter ((/= 0) . snd) $ zip [0..] coeffs
+fromDP (P coeffs) = S $ normalize $ filter ((/= 0) . snd) $ zip [0 ..] coeffs
 
 toDP :: (Eq a, Num a) => SparsePoly a -> DensePoly a
 toDP (S []) = P []
-toDP (S xs) = P $ map snd xs ++ replicate (fst (last xs) - length xs + 1) 0
+toDP (S ((d, c) : cs)) =
+  let mono = toDenseMonomial (d, c)
+   in mono + toDP (S cs)
+  where
+    toDenseMonomial :: (Eq a, Num a) => (Int, a) -> DensePoly a
+    toDenseMonomial (_, 0) = P []
+    toDenseMonomial (a, b) = P $ replicate a 0 ++ [b]
 
 first :: (a -> a') -> (a, b) -> (a', b)
 first f (a, b) = (f a, b)
@@ -53,7 +60,7 @@ instance Polynomial SparsePoly where
 instance (Eq a, Num a) => Num (SparsePoly a) where
   (+), (*) :: (Eq a, Num a) => SparsePoly a -> SparsePoly a -> SparsePoly a
   (+) (S xs) (S ys) = S $ sortPairsByFirstDesc $ cleanUp $ combine (+) xs ys
-  (*) (S xs) (S ys) = S $ normalize [(i+j, c*d) | (i, c) <- xs, (j, d) <- ys]
+  (*) (S xs) (S ys) = S $ normalize [(i + j, c * d) | (i, c) <- xs, (j, d) <- ys]
 
   negate :: (Eq a, Num a) => SparsePoly a -> SparsePoly a
   negate (S xs) = S $ map (second negate) xs
@@ -75,24 +82,23 @@ cleanUp = filter (\(_, y) -> y /= 0)
 
 combine :: Eq a => (b -> b -> b) -> [(a, b)] -> [(a, b)] -> [(a, b)]
 combine f xs ys =
-    let common = [(x, f a b) | (x, a) <- xs, (y, b) <- ys, x == y]
-        unique = filter (\(x, _) -> x `notElem` map fst ys) xs ++ filter (\(x, _) -> notElem x (map fst xs)) ys
-        in  unique ++ common
+  let common = [(x, f a b) | (x, a) <- xs, (y, b) <- ys, x == y]
+      unique = filter (\(x, _) -> x `notElem` map fst ys) xs ++ filter (\(x, _) -> notElem x (map fst xs)) ys
+   in unique ++ common
 
 normalize :: (Eq a, Num a) => [(Int, a)] -> [(Int, a)]
 normalize xs = filter (\(_, c) -> c /= 0) $ simplify $ sortOn (Data.Ord.Down . fst) xs
 
 simplify :: (Eq a, Num b) => [(a, b)] -> [(a, b)]
 simplify [] = []
-simplify [(a,b)] = [(a,b)]
-simplify ((a,b):(c,d):xs) 
-  | a == c = simplify $ (a, b + d):xs
-  | otherwise = (a,b): simplify ((c,d):xs)
-
+simplify [(a, b)] = [(a, b)]
+simplify ((a, b) : (c, d) : xs)
+  | a == c = simplify $ (a, b + d) : xs
+  | otherwise = (a, b) : simplify ((c, d) : xs)
 
 instance (Eq a, Num a) => Eq (SparsePoly a) where
-    (==) :: (Eq a, Num a) => SparsePoly a -> SparsePoly a -> Bool
-    p == q = nullP(p-q)
+  (==) :: (Eq a, Num a) => SparsePoly a -> SparsePoly a -> Bool
+  p == q = nullP (p - q)
 
 -- qrP s t | not(nullP t) = (q, r) iff s == q*t + r && degree r < degree t
 qrP :: (Eq a, Fractional a) => SparsePoly a -> SparsePoly a -> (SparsePoly a, SparsePoly a)
